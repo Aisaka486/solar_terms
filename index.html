@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>未来信息创新学院 - 节气明信片网站</title>
+
+    <link href="https://fonts.loli.net/css2?family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@400;700&family=ZCOOL+QingKe+HuangYou&family=Zhi+Mang+Xing&display=swap" rel="stylesheet">
+    <script src="https://cdn.staticfile.net/fabric.js/5.3.1/fabric.min.js"></script>
+
+    <style>
+        :root {
+            --primary-color: #6b7a5c;
+            --bg-color: #f8f7f2;
+            --card-bg: #ffffff;
+            --text-main: #333333;
+            --accent-color: #a68d60;
+            --danger-color: #d6644a;
+            --success-color: #4caf50;
+        }
+
+        body { font-family: 'Noto Serif SC', serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 0; display: flex; flex-direction: column; min-height: 100vh; overflow-x: hidden; }
+        header { text-align: center; padding: 3rem 1rem; background: linear-gradient(to bottom, #ffffff, var(--bg-color)); }
+        header h1 { font-size: 2.5rem; letter-spacing: 0.5rem; color: var(--primary-color); margin: 0; }
+        header p { font-size: 1.1rem; color: #888; margin-top: 0.5rem; letter-spacing: 0.2rem; }
+
+        .nav-tabs { display: flex; justify-content: center; gap: 2rem; margin-bottom: 2rem; }
+        .tab-btn { background: none; border: none; font-family: inherit; font-size: 1.2rem; cursor: pointer; padding: 0.5rem 1rem; color: #999; transition: 0.3s; border-bottom: 2px solid transparent; }
+        .tab-btn.active { color: var(--primary-color); border-bottom-color: var(--primary-color); font-weight: bold; }
+
+        .container { max-width: 1200px; margin: 0 auto; flex: 1; padding: 0 1rem 3rem; width: 100%; box-sizing: border-box; }
+        .section { display: none; }
+        .section.active { display: block; animation: fadeIn 0.4s ease; }
+
+        .maker-grid { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 2rem; background: var(--card-bg); padding: 1.5rem; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border-radius: 4px; }
+        
+        .postcard-stage-box { 
+            background: transparent !important; border: none !important; width: 100%;
+            display: flex; justify-content: center; align-items: center; padding: 25px 0 !important;
+        }
+
+        .canvas-container { 
+            margin: 0 !important; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15) !important; 
+            background-color: #fff !important; border-radius: 2px;
+        }
+
+        .toolbar { padding: 1rem; border-left: 1px solid #f0f0f0; }
+        .tool-group { margin-bottom: 1.5rem; }
+        .tool-group label { display: block; margin-bottom: 0.5rem; font-weight: bold; font-size: 0.9rem; }
+
+        select, input[type="text"], textarea { width: 100%; padding: 8px; border: 1px solid #ddd; font-family: inherit; margin-bottom: 0.5rem; box-sizing: border-box; background: #fff;}
+        
+        optgroup { font-style: normal; font-weight: bold; color: var(--primary-color); background: #f9f9f9; }
+        optgroup option { color: #333; background: #fff; padding: 4px; }
+
+        .color-palette { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+        .color-btn { width: 24px; height: 24px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.1); cursor: pointer; transition: transform 0.2s; }
+        .color-btn:hover { transform: scale(1.2); }
+        .custom-color-picker { width: 100%; height: 35px; border: 1px solid #ddd; padding: 2px; cursor: pointer; margin-bottom: 10px; }
+
+        .btn { width: 100%; padding: 12px; background: var(--primary-color); color: white; border: none; cursor: pointer; font-family: inherit; margin-top: 10px; transition: 0.3s; font-size: 1rem; border-radius: 4px; }
+        .btn:hover { opacity: 0.9; }
+        .btn-outline { background: white; color: var(--primary-color); border: 1px solid var(--primary-color); }
+        .btn-danger { background: white; color: var(--danger-color); border: 1px dashed var(--danger-color); }
+
+        .quiz-box { max-width: 800px; margin: 0 auto; background: white; padding: 3rem; box-shadow: 0 5px 20px rgba(0,0,0,0.03); border-radius: 4px; }
+        .quiz-box h2 { text-align: center; color: var(--primary-color); margin-bottom: 2.5rem; border-bottom: 2px solid var(--bg-color); padding-bottom: 1rem; }
+        .question-item { margin-bottom: 2.5rem; }
+        .question-item p.q-title { text-align: left; font-weight: bold; font-size: 1.1rem; margin-bottom: 1rem; line-height: 1.5;}
+        .options-list { list-style: none; padding: 0; margin: 0; text-align: left; }
+        .options-list li { margin: 12px 0; padding: 8px 12px; border-radius: 4px; transition: background 0.3s; }
+        .options-list li:hover { background: #f9f9f9; }
+        .options-list label { display: flex; align-items: center; gap: 10px; cursor: pointer; color: #444; width: 100%; }
+        .options-list input[type="radio"] { margin: 0; width: 18px; height: 18px; cursor: pointer; }
+        
+        .explanation-box { 
+            display: none; margin-top: 15px; padding: 15px 20px; 
+            background: #f8f9fa; border-radius: 6px; font-size: 0.95rem; 
+            line-height: 1.6; color: #555; border-left: 4px solid #ccc;
+            animation: fadeIn 0.5s ease;
+        }
+
+        #score-result { display: none; text-align: center; margin-top: 2rem; padding: 2rem; background-color: #f0f4eb; border: 1px solid var(--primary-color); border-radius: 4px; }
+        .score-number { font-size: 4rem; font-weight: bold; color: var(--danger-color); margin: 10px 0; }
+
+        footer { text-align: center; padding: 2rem; background: #f0eee9; font-size: 0.85rem; color: #777; margin-top: auto;}
+
+        @media (max-width: 850px) {
+            header h1 { font-size: 1.8rem; }
+            .maker-grid { grid-template-columns: minmax(0, 1fr); padding: 10px; }
+            .toolbar { border-left: none; border-top: 1px solid #f0f0f0; }
+            .quiz-box { padding: 1.5rem; margin: 0; }
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>廿四光阴 · 映像信院</h1>
+    <p>未来信息创新学院节气互动平台</p>
+</header>
+
+<div class="container">
+    <div class="nav-tabs">
+        <button class="tab-btn active" onclick="showSection('maker', this)">明信片制作</button>
+        <button class="tab-btn" onclick="showSection('quiz', this)">节气问答</button>
+    </div>
+
+    <div id="maker" class="section active">
+        <div class="maker-grid">
+            <div class="postcard-stage-box" id="newCanvasWrapper">
+                <canvas id="postcardCanvas"></canvas>
+            </div>
+            
+            <div class="toolbar">
+                <div class="tool-group">
+                    <label>1. 背景图片</label>
+                    <select onchange="changeBg(this.value)">
+                        <option value="">请选择背景...</option>
+                        <option value="images/本部学生公寓.jpg">本部学生公寓</option>
+                        <option value="images/本超大家沙龙.jpg">本超大家沙龙</option>
+                        <option value="images/光华楼.jpg">光华楼</option>
+                        <option value="images/光华楼西侧.jpg">光华楼西侧</option>
+                        <option value="images/国权和邯郸路口.jpg">国权和邯郸路口</option>
+                    </select>
+                    <p style="font-size: 0.8rem; color: #999; margin: 8px 0 5px;">或者上传本地照片：</p>
+                    <input type="file" id="imgLoader" accept="image/*" style="font-size: 0.8rem;">
+                </div>
+
+                <div class="tool-group">
+                    <label>2. 文字与排版（字体加载较慢，请耐心稍等）</label>
+                    <select id="fontSelector" onchange="changeActiveProperty('fontFamily', this.value)" style="margin-bottom: 10px;">
+                        <option value="Noto Serif SC">经典宋体</option>
+                        <option value="Zhi Mang Xing">潇洒行书</option>
+                        <option value="Ma Shan Zheng">古风楷体</option>
+                        <option value="ZCOOL QingKe HuangYou">现代海报体</option>
+                    </select>
+                    
+                    <label style="font-weight: normal; font-size: 0.8rem; color: #666;">文字颜色</label>
+                    <div class="color-palette">
+                        <div class="color-btn" style="background: #ffffff;" onclick="changeActiveProperty('fill', '#ffffff')" title="纯洁白"></div>
+                        <div class="color-btn" style="background: #333333;" onclick="changeActiveProperty('fill', '#333333')" title="玄岩黑"></div>
+                        <div class="color-btn" style="background: #6b7a5c;" onclick="changeActiveProperty('fill', '#6b7a5c')" title="豆绿色"></div>
+                        <div class="color-btn" style="background: #d6644a;" onclick="changeActiveProperty('fill', '#d6644a')" title="朱砂红"></div>
+                        <div class="color-btn" style="background: #2a5caa;" onclick="changeActiveProperty('fill', '#2a5caa')" title="黛蓝色"></div>
+                    </div>
+                    <input type="color" id="customColor" class="custom-color-picker" oninput="changeActiveProperty('fill', this.value)">
+
+                    <button class="btn btn-outline" onclick="addTermText()">添加节气大字</button>
+                    <textarea id="userQuote" rows="2" placeholder="在这里输入你想说的话..." style="margin-top: 10px;">终归小满胜万全</textarea>
+                    <button class="btn btn-outline" onclick="addQuote()">放置短句</button>
+                </div>
+
+                <div class="tool-group">
+                    <label>3. 装饰贴纸</label>
+                    <select id="stickerCategorySelector" style="margin-bottom: 10px;">
+                        <optgroup label="🎨 节气">
+                            <option value="1">小满 - 风格一</option>
+                            <option value="2">小满 - 风格二</option>
+                            <option value="3">小满 - 风格三</option>
+                            <option value="4">小满 - 风格四</option>
+                            <option value="5">小满 - 风格五</option>
+                        </optgroup>
+                        <optgroup label="🍃 自然风物">
+                            <option value="稻草人">稻草人</option>
+                            <option value="水车">水车</option>
+                            <option value="松鼠">松鼠</option>
+                            <option value="穗">穗</option>
+                            <option value="燕">燕</option>
+                            <option value="鸭1">鸭老大</option>
+                            <option value="鸭2">鸭老二</option>
+                            <option value="鸭3">鸭老三</option>
+                        </optgroup>
+                        <optgroup label="😊 表情互动">
+                            <option value="加油">加油打气</option>
+                            <option value="好样的">好样的</option>
+                            <option value="小心心">小心心</option>
+                            <option value="晚安">晚安</option>
+                            <option value="好难">好难啊</option>
+                            <option value="惊吓">惊吓小表情</option>
+                        </optgroup>
+                    </select>
+                    <button class="btn btn-outline" style="border-color: var(--accent-color); color: var(--accent-color);" onclick="addRealSticker()">贴上所选贴纸</button>
+                </div>
+
+                <div class="tool-group" style="margin-top: 2rem; border-top: 1px solid #eee; padding-top: 1rem;">
+                    <label>4. 调整与导出</label>
+                    <button class="btn btn-danger" onclick="deleteSelected()">删除选中元件 (可按Delete键)</button>
+                    <button class="btn" style="background: var(--accent-color);" onclick="downloadImage()">保存并导出高清图</button>
+                    <button class="btn btn-outline" style="border-color:#ccc; color:#888;" onclick="clearAll()">全部重置</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="quiz" class="section">
+        <div class="quiz-box">
+            <h2>小满节气 · 知识挑战</h2>
+            <form id="quizForm">
+                <div id="quiz-container">
+                    </div>
+                <button type="button" id="submit-btn" class="btn" style="font-size: 1.2rem; margin-top: 2rem; padding: 15px;" onclick="calculateScore()">交卷出分</button>
+            </form>
+            
+            <div id="score-result">
+                <h3 style="font-size: 1.5rem; margin-bottom: 0;">评测完成！</h3>
+                <p style="color:#666;">您的最终得分是</p>
+                <div class="score-number" id="final-score">0</div>
+                <p id="score-feedback" style="color:var(--primary-color); font-weight:bold; font-size:1.1rem; margin-top:10px;"></p>
+                <button class="btn btn-outline" style="width: 200px; margin-top: 20px;" onclick="resetQuiz()">重新测试</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer>
+    <p>未来信息创新学院团委和学生会 联合出品</p>
+</footer>
+
+<script>
+    // ==========================================
+    // 页面切换与基础配置
+    // ==========================================
+    function showSection(id, btn) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        btn.classList.add('active');
+    }
+
+    fabric.Object.prototype.set({
+        transparentCorners: false, cornerColor: '#6b7a5c', cornerStrokeColor: '#ffffff',
+        borderColor: '#6b7a5c', cornerSize: 10, padding: 8, cornerStyle: 'circle', borderDashArray: [4, 4]
+    });
+
+    // ==========================================
+    // 画板制作器核心逻辑
+    // ==========================================
+    let DESIGN_WIDTH = 800;  let DESIGN_HEIGHT = 500; 
+    const MAX_EXPORT_SIZE = 1000;
+    const canvas = new fabric.Canvas('postcardCanvas', { backgroundColor: '#fff', allowTouchScrolling: true, selection: false });
+
+    function applyCanvasSize() {
+        const wrapper = document.getElementById('newCanvasWrapper');
+        if (!wrapper) return;
+        let maxWidth = wrapper.clientWidth;
+        if (maxWidth === 0) maxWidth = Math.min(window.innerWidth - 40, DESIGN_WIDTH);
+        let maxHeight = window.innerHeight * (window.innerWidth > 850 ? 0.75 : 0.60);
+        let scale = Math.min(maxWidth / DESIGN_WIDTH, maxHeight / DESIGN_HEIGHT, 1);
+        canvas.setDimensions({ width: DESIGN_WIDTH * scale, height: DESIGN_HEIGHT * scale });
+        canvas.setZoom(scale); canvas.calcOffset(); canvas.renderAll();
+    }
+    window.addEventListener('resize', applyCanvasSize);
+
+    function changeBg(url) {
+        if(!url) return;
+        fabric.Image.fromURL(url, function(img) {
+            if (img.width >= img.height) {
+                DESIGN_WIDTH = Math.min(img.width, MAX_EXPORT_SIZE);
+                DESIGN_HEIGHT = DESIGN_WIDTH * (img.height / img.width);
+            } else {
+                DESIGN_HEIGHT = Math.min(img.height, MAX_EXPORT_SIZE);
+                DESIGN_WIDTH = DESIGN_HEIGHT * (img.width / img.height);
+            }
+            canvas.setWidth(DESIGN_WIDTH); canvas.setHeight(DESIGN_HEIGHT);
+            const scale = DESIGN_WIDTH / img.width;
+            img.set({ originX: 'left', originY: 'top', left: 0, top: 0, scaleX: scale, scaleY: scale });
+            canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas));
+            applyCanvasSize();
+        }, { crossOrigin: 'anonymous' });
+    }
+
+    document.getElementById('imgLoader').onchange = function(e) {
+        var reader = new FileReader();
+        reader.onload = (event) => changeBg(event.target.result);
+        reader.readAsDataURL(e.target.files[0]);
+    }
+
+    function changeActiveProperty(prop, value) {
+        const activeObj = canvas.getActiveObject();
+        if (activeObj && activeObj.type.includes('text')) { activeObj.set(prop, value); canvas.requestRenderAll(); }
+        if (prop === 'fill') document.getElementById('customColor').value = value;
+    }
+
+    canvas.on('selection:created', syncToolbar); canvas.on('selection:updated', syncToolbar);
+    function syncToolbar(e) {
+        const obj = e.selected[0];
+        if (obj && obj.type.includes('text')) {
+            document.getElementById('fontSelector').value = obj.fontFamily;
+            document.getElementById('customColor').value = obj.fill;
+        }
+    }
+
+    function addTermText() {
+        const font = document.getElementById('fontSelector').value;
+        const color = document.getElementById('customColor').value;
+        // 修改为小满
+        const text = new fabric.IText('小满', { left: 50, top: 50, fontFamily: font, fontSize: 100, fill: color, shadow: '2px 2px 8px rgba(0,0,0,0.4)' });
+        canvas.add(text); canvas.setActiveObject(text);
+    }
+
+    function addQuote() {
+        const val = document.getElementById('userQuote').value || "终归小满胜万全";
+        const font = document.getElementById('fontSelector').value;
+        const color = document.getElementById('customColor').value;
+        const quote = new fabric.IText(val, { left: 50, top: DESIGN_HEIGHT - 80, fontFamily: font, fontSize: 28, fill: color, shadow: '1px 1px 5px rgba(0,0,0,0.6)' });
+        canvas.add(quote); canvas.setActiveObject(quote);
+    }
+
+    function addRealSticker() {
+        const stickerName = document.getElementById('stickerCategorySelector').value;
+        const imageUrl = 'images/' + stickerName + '.png';
+
+        fabric.Image.fromURL(imageUrl, function(img) {
+            if (!img) { alert("找不到图片，请确保 'images/" + stickerName + ".png' 存在！"); return; }
+            if (img.width > 200) img.scaleToWidth(150); else img.scaleToWidth(100); 
+            img.set({ left: DESIGN_WIDTH / 2, top: DESIGN_HEIGHT / 2, originX: 'center', originY: 'center' });
+            canvas.add(img); canvas.setActiveObject(img); canvas.requestRenderAll();
+        }, { crossOrigin: 'anonymous' }); 
+    }
+
+    function deleteSelected() { canvas.getActiveObjects().forEach(obj => canvas.remove(obj)); canvas.discardActiveObject().renderAll(); }
+    function clearAll() { canvas.clear(); canvas.setBackgroundColor('#fff', canvas.renderAll.bind(canvas)); DESIGN_WIDTH = 800; DESIGN_HEIGHT = 500; applyCanvasSize(); }
+    function downloadImage() {
+        canvas.discardActiveObject().renderAll();
+        const multiplier = 1 / canvas.getZoom();
+        const link = document.createElement('a'); link.download = '信院节气明信片.png'; link.href = canvas.toDataURL({ format: 'png', quality: 1, multiplier: multiplier }); link.click();
+    }
+    window.addEventListener('keydown', function(e) {
+        if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') { if (e.key === 'Delete' || e.key === 'Backspace') { deleteSelected(); e.preventDefault(); } }
+    });
+
+    // ==========================================
+    // 💡 全新 10道题 小满节气 问答题库
+    // ==========================================
+    const quizData = [
+        {
+            q: "“小满”这一节气的命名含义是？",
+            options: { A: "降水开始增多", B: "夏熟作物的籽粒开始灌浆饱满，但未成熟", C: "天气开始变得非常炎热", D: "农作物完全成熟可以收割" },
+            correct: "B",
+            explanation: "《月令七十二候集解》记载：“四月中，小满者，物至于此小得盈满。” 意思是夏熟作物的籽粒开始灌浆，但还未完全成熟，只是“小满”，还未“大满”。"
+        },
+        {
+            q: "小满是二十四节气中的第几个节气？",
+            options: { A: "第七个", B: "第八个", C: "第九个", D: "第十个" },
+            correct: "B",
+            explanation: "二十四节气中，春季六个节气结束后，立夏是第七个，小满紧随其后，是全年的第八个节气，也是夏季的第二个节气。"
+        },
+        {
+            q: "小满三候中，第一候是哪种植物或动物的活动？",
+            options: { A: "苦菜秀", B: "靡草死", C: "麦秋至", D: "螳螂生" },
+            correct: "A",
+            explanation: "小满三候为：一候苦菜秀，二候靡草死，三候麦秋至。意思是小满节气后，苦菜枝叶繁茂；喜阴的一些草类开始枯死；麦子开始成熟。"
+        },
+        {
+            q: "“小满”节气期间，我国南方的天气特点通常是？",
+            options: { A: "降水稀少，气候干燥", B: "寒潮频发，气温骤降", C: "降水开始明显增多，常有“小满大满江河满”之说", D: "沙尘暴天气多发" },
+            correct: "C",
+            explanation: "南方地区有“小满大满江河满”的民谚，小满前后南方暴雨开始增多，降水频繁，江河水位上涨。而北方往往降水依然偏少。"
+        },
+        {
+            q: "古代农耕社会中，小满节气有“动三车”的习俗，“三车”不包括以下哪一个？",
+            options: { A: "水车", B: "油车", C: "丝车", D: "纺车" },
+            correct: "D",
+            explanation: "江南地区有小满“动三车”的习俗，指的是水车、油车和丝车。小满前后，农田需要大量水分来栽插水稻（水车）；油菜籽成熟需要打油（油车）；春蚕结茧，需要缫丝（丝车）。"
+        },
+        {
+            q: "民间在小满这一天有祭祀哪位神灵以求风调雨顺的习俗？",
+            options: { A: "土地神", B: "车神（水车神）", C: "龙王", D: "灶神" },
+            correct: "B",
+            explanation: "民间有小满祭祀车神（水车神）的习俗。农家在车水前会在水车的车基上放置鱼肉、香烛等祭拜，并在水车上泼一盆白水，祈求风调雨顺、水源充足。"
+        },
+        {
+            q: "“春风吹，苦菜长，荒滩野地是粮仓。” 小满节气有吃哪种植物的习俗？",
+            options: { A: "苦瓜", B: "苦菜", C: "芥菜", D: "苦菊" },
+            correct: "B",
+            explanation: "古语有“小满之日苦菜秀”。苦菜是中国人最早食用的野菜之一。小满时节天气渐渐炎热，吃带有苦味的蔬菜有清热解毒、降火气的功效。"
+        },
+        {
+            q: "“小满”这个节气名称，在二十四节气中有着独特的哲学意味，以下说法正确的是？",
+            options: { A: "它是唯一一个没有对应“大”节气的节气", B: "它是夏季的最后一个节气", C: "它标志着气温达到全年最高", D: "它是一个纯粹记录天文现象的节气" },
+            correct: "A",
+            explanation: "二十四节气中有小暑大暑、小雪大雪、小寒大寒，唯独有小满而没有大满。这契合了中国儒家的中庸之道，认为“满招损，谦受益”，“小满”即是最好的状态。"
+        },
+        {
+            q: "小满时节，南方地区正值哪种重要农作物的栽插期？",
+            options: { A: "冬小麦", B: "高粱", C: "水稻", D: "玉米" },
+            correct: "C",
+            explanation: "小满时节，南方大部分地区正是水稻栽插的季节。水稻插秧需要大量的水，因此小满丰富的降雨对南方农事至关重要。"
+        },
+        {
+            q: "天文学上，小满的到来意味着太阳到达了黄经多少度？",
+            options: { A: "45°", B: "60°", C: "75°", D: "90°" },
+            correct: "B",
+            explanation: "春分时太阳黄经为0°，每个节气移动15°。经过清明（15°）、谷雨（30°）、立夏（45°）后，小满时太阳到达黄经60°。"
+        }
+    ];
+
+    // 初始化渲染试卷
+    function renderQuiz() {
+        const container = document.getElementById('quiz-container');
+        let html = '';
+        quizData.forEach((item, index) => {
+            html += `
+            <div class="question-item" id="q-item-${index}">
+                <p class="q-title">${index + 1}. ${item.q}</p>
+                <ul class="options-list">`;
+            for (const [key, val] of Object.entries(item.options)) {
+                html += `<li><label><input type="radio" name="q${index}" value="${key}"> <strong>${key}.</strong> ${val}</label></li>`;
+            }
+            html += `</ul>
+                <div class="explanation-box" id="exp-${index}"></div>
+            </div>`;
+        });
+        container.innerHTML = html;
+    }
+
+    // 交卷计算逻辑
+    function calculateScore() {
+        let score = 0;
+        let allAnswered = true;
+
+        // 检查是否全部作答
+        quizData.forEach((item, index) => {
+            if (!document.querySelector(`input[name="q${index}"]:checked`)) {
+                allAnswered = false;
+            }
+        });
+
+        if (!allAnswered) {
+            alert("您还有未作答的题目，请答完10道题后再交卷哦！");
+            return;
+        }
+
+        // 批改与渲染解析
+        quizData.forEach((item, index) => {
+            const selectedInput = document.querySelector(`input[name="q${index}"]:checked`);
+            const expBox = document.getElementById(`exp-${index}`);
+            
+            expBox.style.display = "block"; // 展开解析
+
+            if (selectedInput.value === item.correct) {
+                score += 10;
+                expBox.style.borderLeftColor = "var(--success-color)";
+                expBox.innerHTML = `<span style="color:var(--success-color);font-weight:bold;">✅ 回答正确！</span><br><br><strong>解析：</strong>${item.explanation}`;
+            } else {
+                expBox.style.borderLeftColor = "var(--danger-color)";
+                expBox.innerHTML = `<span style="color:var(--danger-color);font-weight:bold;">❌ 回答错误。</span> 你的答案：${selectedInput.value}，<strong>正确答案：${item.correct}</strong><br><br><strong>解析：</strong>${item.explanation}`;
+            }
+
+            // 锁定所有选项，防止修改
+            document.querySelectorAll(`input[name="q${index}"]`).forEach(input => input.disabled = true);
+        });
+
+        // 显示总分面板
+        document.getElementById('submit-btn').style.display = 'none';
+        document.getElementById('score-result').style.display = 'block';
+        document.getElementById('final-score').innerText = score;
+        
+        const feedbackEl = document.getElementById('score-feedback');
+        if (score === 100) feedbackEl.innerText = "太完美了！你是名副其实的节气文化大师！🎉";
+        else if (score >= 80) feedbackEl.innerText = "非常棒！你对传统文化的了解很深入！👏";
+        else if (score >= 60) feedbackEl.innerText = "及格啦！继续学习，感受小满节气的魅力吧！📚";
+        else feedbackEl.innerText = "没关系，刚好趁这个机会涨知识啦！💪";
+
+        // 平滑滚动回顶部查看结果
+        document.getElementById('quiz').scrollIntoView({ behavior: "smooth" });
+    }
+
+    // 重新测试逻辑
+    function resetQuiz() {
+        renderQuiz(); // 重新生成干净的题目
+        document.getElementById('submit-btn').style.display = 'block';
+        document.getElementById('score-result').style.display = 'none';
+        document.getElementById('quiz').scrollIntoView({ behavior: "smooth" });
+    }
+
+    // 页面加载完毕后执行
+    window.onload = function() { 
+        setTimeout(applyCanvasSize, 50); 
+        renderQuiz(); // 渲染问答题
+    };
+
+</script>
+
+</body>
+</html>
